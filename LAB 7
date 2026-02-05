@@ -1,0 +1,40 @@
+import pandas as pd
+
+train = pd.DataFrame({
+    "age": [25, None, 40, 33],
+    "city": ["NY", "SF", None, "NY"],
+})
+
+test = pd.DataFrame({
+    "age": [None, 50],
+    "city": ["SF", None],
+})
+
+def fit_imputer(train_df):
+    params = {}
+    for col in train_df.columns:
+        if train_df[col].dtype == "object":
+            params[col] = train_df[col].mode()[0] 
+        else:
+            params[col] = train_df[col].median()   
+    return params
+
+def transform_imputer(df, params, add_indicators=True):
+    df_new = df.copy()
+    for col in df.columns:
+        if add_indicators:
+            df_new[col + "_missing"] = df_new[col].isna().astype(int)
+        df_new[col] = df_new[col].fillna(params[col])
+    return df_new
+
+params = fit_imputer(train)
+print("Imputer params:", params)
+
+train_imputed = transform_imputer(train, params)
+test_imputed = transform_imputer(test, params)
+
+print("\nTrain imputed:")
+print(train_imputed)
+
+print("\nTest imputed:")
+print(test_imputed)
