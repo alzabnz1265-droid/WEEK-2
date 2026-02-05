@@ -1,0 +1,54 @@
+import numpy as np
+import pandas as pd
+
+np.random.seed(10)
+values = np.concatenate([np.random.lognormal(10, 0.5, 1000), [1e7, 2e7]])
+df = pd.DataFrame({"income": values})
+
+# IQR-based outlier detection
+def iqr_bounds(series):
+    q1 = series.quantile(0.25)
+    q3 = series.quantile(0.75)
+    iqr = q3 - q1
+    lower = q1 - 1.5 * iqr
+    upper = q3 + 1.5 * iqr
+    return lower, upper
+
+def detect_outliers_iqr(series):
+    lower, upper = iqr_bounds(series)
+    return (series < lower) | (series > upper)
+
+# Z-score outlier detection
+def detect_outliers_zscore(series, threshold=3):
+    mean = series.mean()
+    std = series.std()
+    z = (series - mean) / std
+    return z.abs() > threshold
+
+# Apply IQR detection
+df["iqr_outlier"] = detect_outliers_iqr(df["income"])
+
+# Apply z-score detection
+df["zscore_outlier"] = detect_outliers_zscore(df["income"])
+
+# Compare strategies
+# 1) No handling
+df_no_handle = df.copy()
+
+# 2) IQR capping
+df_iqr_capped = df.copy()
+lower, upper = iqr_bounds(df_iqr_capped["income"])
+df_iqr_capped["income"] = df_iqr_capped["income"].clip(lower, upper)
+
+# 3) log1p transform
+df_log = df.copy()
+df_log["income"] = np.log1p(df_log["income"])
+
+print("Original vs IQR capped vs Log1p:")
+print(df_no_handle["income"].head())
+print(df_iqr_capped["income"].head())
+print(df_log["income"].head())
+
+print("\nOutlier counts:")
+print("IQR outliers:", df["iqr_outlier"].sum())
+print("Z-score outliers:", df["zscore_outlier"].sum())
