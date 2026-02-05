@@ -1,0 +1,30 @@
+import pandas as pd
+
+raw = {
+    "age": ["25", "30", "unknown"],
+    "income": ["$50,000", "$60,000", None],
+    "signup": ["2024-01-01", "01/05/2024", "not a date"],
+}
+
+df = pd.DataFrame(raw)
+
+def normalize_schema(df):
+    df_new = df.copy()
+    
+    df_new["age"] = pd.to_numeric(df_new["age"], errors="coerce")
+    
+    df_new["income"] = df_new["income"].str.replace("$","",regex=False)
+    df_new["income"] = df_new["income"].str.replace(",","",regex=False)
+    df_new["income"] = pd.to_numeric(df_new["income"], errors="coerce")
+    
+    df_new["signup"] = pd.to_datetime(df_new["signup"], errors="coerce")
+    
+    return df_new
+
+df_clean = normalize_schema(df)
+
+print("Converted DataFrame:")
+print(df_clean)
+
+print("\nNaN counts per column:")
+print(df_clean.isna().sum())
