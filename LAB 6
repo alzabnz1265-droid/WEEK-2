@@ -1,0 +1,41 @@
+import numpy as np
+import pandas as pd
+
+raw = {
+    "age": [25, "N/A", 40, 33, "?"],
+    "income": [50000, 60000, None, "unknown", 80000],
+    "churned": [0, 1, 0, 1, 0],
+}
+
+df_raw = pd.DataFrame(raw)
+df = df_raw.replace(["N/A", "NA", "not reported", "unknown", "?"], np.nan)
+
+print("Data after replacing missing values:")
+print(df)
+
+print("\nMissing per column (%):")
+print(df.isna().mean() * 100)
+
+print("\nMissing per row (%):")
+print(df.isna().mean(axis=1) * 100)
+
+df_A = df.dropna(subset=["age", "income"])
+print("\nVersion A:")
+print(df_A)
+
+df_B = df.copy()
+df_B["age"] = pd.to_numeric(df_B["age"])
+df_B["income"] = pd.to_numeric(df_B["income"])
+df_B["age_missing"] = df_B["age"].isna().astype(int)
+df_B["income_missing"] = df_B["income"].isna().astype(int)
+df_B["age"] = df_B["age"].fillna(df_B["age"].mean())
+df_B["income"] = df_B["income"].fillna(df_B["income"].mean())
+
+print("\nVersion B:")
+print(df_B)
+
+print("\nCompare mean values:")
+print("Version A mean:")
+print(df_A[["age","income"]].mean())
+print("Version B mean:")
+print(df_B[["age","income"]].mean())
